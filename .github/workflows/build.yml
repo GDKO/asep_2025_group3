@@ -1,0 +1,75 @@
+name: Build and Release AsepQuizG3
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-mac:
+    name: Build for macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build macOS App
+        run: |
+          pyinstaller --onedir --windowed --add-data "questions.json:." --icon=icon.icns --name "AsepQuizG3-mac" quiz.py
+
+      - name: Zip macOS Build
+        run: |
+          cd dist
+          zip -r AsepQuizG3-mac.zip AsepQuizG3-mac.app
+
+      - name: Upload macOS to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/AsepQuizG3-mac.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  build-win:
+    name: Build for Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Windows App
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --add-data "questions.json;." --icon=icon.ico --name "AsepQuizG3-win" quiz.py
+
+      - name: Zip Windows Build
+        run: |
+          Compress-Archive -Path dist\AsepQuizG3-win -DestinationPath dist\AsepQuizG3-win.zip
+
+      - name: Upload Windows to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/AsepQuizG3-win.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
